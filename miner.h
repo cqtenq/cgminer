@@ -399,6 +399,7 @@ enum cl_kernels {
 	KL_DIABLO,
 	KL_SCRYPT,
 	KL_KECCAK,
+	KL_NEOSCRYPT,
 };
 
 enum dev_reason {
@@ -1123,6 +1124,10 @@ extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user
 #define MAX_GPU_INTENSITY MAX_SHA_INTENSITY
 #endif
 
+#ifdef USE_NEOSCRYPT
+
+#endif
+
 extern bool hotplug_mode;
 extern int hotplug_time;
 extern struct list_head scan_devices;
@@ -1139,6 +1144,11 @@ extern int gpu_threads;
 extern bool opt_scrypt;
 #else
 #define opt_scrypt (0)
+#endif
+#ifdef USE_NEOSCRYPT
+extern bool opt_neoscrypt;
+#else
+#define opt_neoscrypt (0)
 #endif
 #ifdef USE_KECCAK
 extern bool opt_keccak;
@@ -1199,6 +1209,9 @@ typedef struct {
 	cl_uint oneA, twoA, threeA, fourA, fiveA, sixA, sevenA;
 #ifdef USE_SCRYPT
 	struct work *work;
+#endif
+#ifdef USE_NEOSCRYPT
+
 #endif
 #ifdef USE_KECCAK
 	unsigned char keccak_data[KECCAK_BUFFER_SIZE];
@@ -1377,6 +1390,9 @@ struct work {
 
 #ifdef USE_SCRYPT
 	unsigned char	device_target[32];
+#endif
+#ifdef USE_NEOSCRYPT
+
 #endif
 	double		device_diff;
 	uint64_t	share_diff;
