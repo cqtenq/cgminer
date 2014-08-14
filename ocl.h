@@ -28,6 +28,10 @@ typedef struct {
 #ifdef USE_KECCAK
 	cl_mem keccak_CLbuffer; /* KECCAK_BUFFER_SIZE bytes */
 #endif
+#ifdef USE_NEOSCRYPT
+
+#endif
+
 	bool hasBitAlign;
 	bool hasOpenCL11plus;
 	bool hasOpenCL12plus;
