@@ -36,6 +36,7 @@
 #ifdef USE_KECCAK
 #include "keccak.h"
 #endif
+
 /* TODO: cleanup externals ********************/
 
 #ifdef HAVE_CURSES
@@ -214,6 +215,10 @@ static enum cl_kernels select_kernel(char *arg)
 	if (!strcmp(arg, "scrypt"))
 		return KL_SCRYPT;
 #endif
+#ifdef USE_NEOSCRYPT
+	if (!strcmp(arg, "neoscrypt"))
+		return KL_NEOSCRYPT;
+#endif
 #ifdef USE_KECCAK
 	if (!strcmp(arg, "keccak"))
 		return KL_KECCAK;
@@ -229,6 +234,8 @@ char *set_kernel(char *arg)
 
 	if (opt_scrypt)
 		return "Cannot specify a kernel with scrypt";
+	if (opt_neoscrypt)
+		return "Cannot specify a kernel with neoscrypt";		
 	if (opt_keccak)
 		return "Cannot specify a kernel with keccak";
 	nextptr = strtok(arg, ",");
@@ -797,7 +804,12 @@ retry:
 			intvar = curses_input("Set GPU scan intensity (d or "
 					      MIN_SCRYPT_INTENSITY_STR " -> "
 					      MAX_SCRYPT_INTENSITY_STR ")");
-		} else {
+		} else if (opt_neoscrypt) {
+			intvar = curses_input("Set GPU scan intensity (d or "
+					      MIN_SCRYPT_INTENSITY_STR " -> "
+					      MAX_SCRYPT_INTENSITY_STR ")");
+		}
+		 else {
 			intvar = curses_input("Set GPU scan intensity (d or "
 					      MIN_SHA_INTENSITY_STR " -> "
 					      MAX_SHA_INTENSITY_STR ")");
@@ -1115,13 +1127,41 @@ static cl_int queue_keccak_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_u
         return status;
 }
 #endif
+#ifdef USE_NEOSCRYPT
+static cl_int queue_neoscrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+	unsigned char *midstate = blk->work->midstate;
+	cl_kernel *kernel = &clState->kernel;
+	unsigned int num = 0;
+	cl_uint le_target;
+	cl_int status = 0;
+
+	le_target = *(cl_uint *)(blk->work->device_target + 28);
+	clState->cldata = blk->work->data;
+	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+	CL_SET_ARG(clState->CLbuffer0);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(clState->padbuffer8);
+	CL_SET_VARG(4, &midstate[0]);
+	CL_SET_VARG(4, &midstate[16]);
+	CL_SET_ARG(le_target);
+
+	return status;
+}
+#endif
 static void set_threads_hashes(unsigned int vectors,int64_t *hashes, size_t *globalThreads,
 			       unsigned int minthreads, __maybe_unused int *intensity)
 {
 	unsigned int threads = 0;
 
 	while (threads < minthreads) {
-		threads = 1 << ((opt_scrypt ? 0 : 15) + *intensity);
+		if (opt_scrypt) {
+			threads = 1 << ((opt_scrypt ? 0 : 15) + *intensity);
+		}
+		if (opt_neoscrypt) {
+			threads = 1 << ((opt_neoscrypt ? 0 : 15) + *intensity);
+		}		
 		if (threads < minthreads) {
 			if (likely(*intensity < MAX_INTENSITY))
 				(*intensity)++;
@@ -1272,12 +1312,16 @@ static void opencl_detect(bool hotplug)
 	if (opt_g_threads == -1) {
 		if (opt_scrypt)
 			opt_g_threads = 1;
+		else if (opt_neoscrypt)
+			opt_g_threads = 1;
 		else
 			opt_g_threads = 2;
 	}
 
 	if (opt_scrypt)
 		opencl_drv.max_diff = 65536;
+	if (opt_neoscrypt)
+		opencl_drv.max_diff = 65536;		
 
 	for (i = 0; i < nDevs; ++i) {
 		struct cgpu_info *cgpu;
@@ -1347,7 +1391,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	int virtual_gpu = cgpu->virtual_gpu;
 	int i = thr->id;
 	static bool failmessage = false;
-	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;	
+	if (opt_neoscrypt) 
+		buffersize = opt_neoscrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;			
 
 	if (!blank_res)
 		blank_res = calloc(buffersize, 1);
@@ -1404,6 +1450,11 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 				cgpu->kname = "scrypt";
 				break;
 #endif
+#ifdef USE_NEOSCRYPT
+			case KL_NEOSCRYPT:
+				cgpu->kname = "neoscrypt";
+				break;
+#endif
 #ifdef USE_KECCAK
 			case KL_KECCAK:
 				cgpu->kname = "keccak";
@@ -1435,6 +1486,9 @@ static bool opencl_thread_init(struct thr_info *thr)
 	thrdata = calloc(1, sizeof(*thrdata));
 	thr->cgpu_data = thrdata;
 	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	if (opt_neoscrypt) {
+		buffersize = opt_neoscrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	}
 
 	if (!thrdata) {
 		applog(LOG_ERR, "Failed to calloc in opencl_thread_init");
@@ -1454,6 +1508,11 @@ static bool opencl_thread_init(struct thr_info *thr)
 #ifdef USE_SCRYPT
 		case KL_SCRYPT:
 			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
+			break;
+#endif
+#ifdef USE_NEOSCRYPT
+		case KL_NEOSCRYPT:
+			thrdata->queue_kernel_parameters = &queue_neoscrypt_kernel;
 			break;
 #endif
 #ifdef USE_KECCAK
@@ -1497,6 +1556,11 @@ static bool opencl_prepare_work(struct thr_info __maybe_unused *thr, struct work
 		work->blk.work = work;
 	else
 #endif
+#ifdef USE_NEOSCRYPT
+	if (opt_neoscrypt)
+		work->blk.work = work;
+	else
+#endif
 #ifdef USE_KECCAK
 	if (opt_keccak)
 		keccak_prepare_work(thr, work);
@@ -1524,6 +1588,10 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	int64_t hashes;
 	int found = opt_scrypt ? SCRYPT_FOUND : FOUND;
 	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	if (opt_neoscrypt) {
+			found = opt_neoscrypt ? SCRYPT_FOUND : FOUND;
+			buffersize = opt_neoscrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;		
+	}
 
 	/* Windows' timer resolution is only 15ms so oversample 5x */
 	if (gpu->dynamic && (++gpu->intervals * dynamic_us) > 70000) {
