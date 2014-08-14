@@ -34,7 +34,7 @@
 /* #undef CRAY_STACKSEG_END */
 
 /* Defined if version of curl supports keepalive. */
-/* #undef CURL_HAS_KEEPALIVE */
+#define CURL_HAS_KEEPALIVE 1
 
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
@@ -46,7 +46,7 @@
 #define DIAKGCN_KERNNAME "diakgcn121016"
 
 /* int execv(const char*, char*const*); */
-#define EXECV_2ND_ARG_TYPE char* const*
+#define EXECV_2ND_ARG_TYPE const char* const*
 
 /* Define to 1 when the gnulib module memchr should be tested. */
 #define GNULIB_TEST_MEMCHR 1
@@ -61,14 +61,14 @@
 #define GNULIB_TEST_SIGPROCMASK 1
 
 /* Defined if ADL headers were found */
-/* #undef HAVE_ADL */
+#define HAVE_ADL 1
 
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
-#define HAVE_ALLOCA_H 1
+/* #undef HAVE_ALLOCA_H */
 
 /* Define if __attribute__((cold)) */
 #define HAVE_ATTRIBUTE_COLD 1
@@ -98,14 +98,14 @@
 #define HAVE_BUILTIN_TYPES_COMPATIBLE_P 1
 
 /* Defined to 1 if curses TUI support is wanted */
-/* #undef HAVE_CURSES */
+#define HAVE_CURSES 1
 
 /* Define to 1 if you have the declaration of `memmem', and to 0 if you don't.
    */
-#define HAVE_DECL_MEMMEM 1
+#define HAVE_DECL_MEMMEM 0
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
+/* #undef HAVE_DLFCN_H */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -124,10 +124,10 @@
 
 /* Define to 1 if mmap()'s MAP_ANONYMOUS flag is available after including
    config.h and <sys/mman.h>. */
-#define HAVE_MAP_ANONYMOUS 1
+/* #undef HAVE_MAP_ANONYMOUS */
 
 /* Define to 1 if you have the `memmem' function. */
-#define HAVE_MEMMEM 1
+/* #undef HAVE_MEMMEM */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -139,94 +139,94 @@
 #define HAVE_OPENCL 1
 
 /* Define to 1 if memmem is declared even after undefining macros. */
-#define HAVE_RAW_DECL_MEMMEM 1
+/* #undef HAVE_RAW_DECL_MEMMEM */
 
 /* Define to 1 if mempcpy is declared even after undefining macros. */
-#define HAVE_RAW_DECL_MEMPCPY 1
+/* #undef HAVE_RAW_DECL_MEMPCPY */
 
 /* Define to 1 if memrchr is declared even after undefining macros. */
-#define HAVE_RAW_DECL_MEMRCHR 1
+/* #undef HAVE_RAW_DECL_MEMRCHR */
 
 /* Define to 1 if rawmemchr is declared even after undefining macros. */
-#define HAVE_RAW_DECL_RAWMEMCHR 1
+/* #undef HAVE_RAW_DECL_RAWMEMCHR */
 
 /* Define to 1 if sigaction is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGACTION 1
+/* #undef HAVE_RAW_DECL_SIGACTION */
 
 /* Define to 1 if sigaddset is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGADDSET 1
+/* #undef HAVE_RAW_DECL_SIGADDSET */
 
 /* Define to 1 if sigdelset is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGDELSET 1
+/* #undef HAVE_RAW_DECL_SIGDELSET */
 
 /* Define to 1 if sigemptyset is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGEMPTYSET 1
+/* #undef HAVE_RAW_DECL_SIGEMPTYSET */
 
 /* Define to 1 if sigfillset is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGFILLSET 1
+/* #undef HAVE_RAW_DECL_SIGFILLSET */
 
 /* Define to 1 if sigismember is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGISMEMBER 1
+/* #undef HAVE_RAW_DECL_SIGISMEMBER */
 
 /* Define to 1 if sigpending is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGPENDING 1
+/* #undef HAVE_RAW_DECL_SIGPENDING */
 
 /* Define to 1 if sigprocmask is declared even after undefining macros. */
-#define HAVE_RAW_DECL_SIGPROCMASK 1
+/* #undef HAVE_RAW_DECL_SIGPROCMASK */
 
 /* Define to 1 if stpcpy is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STPCPY 1
+/* #undef HAVE_RAW_DECL_STPCPY */
 
 /* Define to 1 if stpncpy is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STPNCPY 1
+/* #undef HAVE_RAW_DECL_STPNCPY */
 
 /* Define to 1 if strcasestr is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRCASESTR 1
+/* #undef HAVE_RAW_DECL_STRCASESTR */
 
 /* Define to 1 if strchrnul is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRCHRNUL 1
+/* #undef HAVE_RAW_DECL_STRCHRNUL */
 
 /* Define to 1 if strdup is declared even after undefining macros. */
 #define HAVE_RAW_DECL_STRDUP 1
 
 /* Define to 1 if strerror_r is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRERROR_R 1
+/* #undef HAVE_RAW_DECL_STRERROR_R */
 
 /* Define to 1 if strncat is declared even after undefining macros. */
 #define HAVE_RAW_DECL_STRNCAT 1
 
 /* Define to 1 if strndup is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRNDUP 1
+/* #undef HAVE_RAW_DECL_STRNDUP */
 
 /* Define to 1 if strnlen is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRNLEN 1
+/* #undef HAVE_RAW_DECL_STRNLEN */
 
 /* Define to 1 if strpbrk is declared even after undefining macros. */
 #define HAVE_RAW_DECL_STRPBRK 1
 
 /* Define to 1 if strsep is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRSEP 1
+/* #undef HAVE_RAW_DECL_STRSEP */
 
 /* Define to 1 if strsignal is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRSIGNAL 1
+/* #undef HAVE_RAW_DECL_STRSIGNAL */
 
 /* Define to 1 if strtok_r is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRTOK_R 1
+/* #undef HAVE_RAW_DECL_STRTOK_R */
 
 /* Define to 1 if strverscmp is declared even after undefining macros. */
-#define HAVE_RAW_DECL_STRVERSCMP 1
+/* #undef HAVE_RAW_DECL_STRVERSCMP */
 
 /* Define to 1 if you have the `sigaction' function. */
-#define HAVE_SIGACTION 1
+/* #undef HAVE_SIGACTION */
 
 /* Define to 1 if you have the `sigaltstack' function. */
-#define HAVE_SIGALTSTACK 1
+/* #undef HAVE_SIGALTSTACK */
 
 /* Define to 1 if the system has the type `siginfo_t'. */
 /* #undef HAVE_SIGINFO_T */
 
 /* Define to 1 if you have the `siginterrupt' function. */
-#define HAVE_SIGINTERRUPT 1
+/* #undef HAVE_SIGINTERRUPT */
 
 /* Define to 1 if 'sig_atomic_t' is a signed integer type. */
 /* #undef HAVE_SIGNED_SIG_ATOMIC_T */
@@ -238,7 +238,7 @@
 /* #undef HAVE_SIGNED_WINT_T */
 
 /* Define to 1 if the system has the type `sigset_t'. */
-/* #undef HAVE_SIGSET_T */
+#define HAVE_SIGSET_T 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -253,10 +253,10 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if `sa_sigaction' is a member of `struct sigaction'. */
-#define HAVE_STRUCT_SIGACTION_SA_SIGACTION 1
+/* #undef HAVE_STRUCT_SIGACTION_SA_SIGACTION */
 
 /* Define to 1 if you have the <syslog.h> header file. */
-#define HAVE_SYSLOG_H 1
+/* #undef HAVE_SYSLOG_H */
 
 /* Define to 1 if you have the <sys/bitypes.h> header file. */
 /* #undef HAVE_SYS_BITYPES_H */
@@ -265,7 +265,7 @@
 /* #undef HAVE_SYS_INTTYPES_H */
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-#define HAVE_SYS_MMAN_H 1
+/* #undef HAVE_SYS_MMAN_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -290,6 +290,9 @@
 
 /* Filename for keccak kernel */
 #define KECCAK_KERNNAME "keccak130718"
+
+/* Filename for keccak kernel */
+#define NEOSCRYPT_KERNNAME "neoscrypt140707"
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -335,6 +338,10 @@
 /* Filename for scrypt kernel */
 #define SCRYPT_KERNNAME "scrypt130511"
 
+/* Filename for neoscrypt kernel */
+#define NEOSCRYPT_KERNNAME "neoscrypt140707"
+
+
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'sig_atomic_t'. */
 /* #undef SIG_ATOMIC_T_SUFFIX */
@@ -370,7 +377,7 @@
 /* #undef USE_ICARUS */
 
 /* Defined to 1 if keccak support is wanted */
-/* #undef USE_KECCAK */
+#define USE_KECCAK 1
 
 /* Defined to 1 if Klondike support is wanted */
 /* #undef USE_KLONDIKE */
@@ -379,7 +386,10 @@
 /* #undef USE_MODMINER */
 
 /* Defined to 1 if scrypt support is wanted */
-/* #undef USE_SCRYPT */
+#define USE_SCRYPT 1
+
+/* Defined to 1 if neoscrypt support is wanted */
+#define USE_NEOSCRYPT 1
 
 /* Defined to 1 if usbutils support required */
 /* #undef USE_USBUTILS */
@@ -406,7 +416,7 @@
 /* #undef _POSIX_SOURCE */
 
 /* "WinNT version for XP+ support" */
-/* #undef _WIN32_WINNT */
+#define _WIN32_WINNT 0x0501
 
 /* Define to 500 only on HP-UX. */
 /* #undef _XOPEN_SOURCE */
@@ -434,7 +444,7 @@
 
 
 /* Define to `int' if <sys/types.h> doesn't define. */
-/* #undef gid_t */
+#define gid_t int
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
@@ -470,7 +480,7 @@
 /* #undef size_t */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
-/* #undef uid_t */
+#define uid_t int
 
 /* Define as a marker that can be attached to declarations that might not
     be used.  This helps to reduce warnings, such as from
