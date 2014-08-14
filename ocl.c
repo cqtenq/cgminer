@@ -396,7 +396,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		} else if (opt_keccak) {
 			applog(LOG_INFO, "Selecting keccak kernel");
 			clState->chosen_kernel = KL_KECCAK;
-		} else if (!strstr(name, "Tahiti") &&
+		} else if (opt_neoscrypt) {
+			applog(LOG_INFO, "Selecting neoscrypt kernel");
+			clState->chosen_kernel = KL_NEOSCRYPT;
+		} 		
+		else if (!strstr(name, "Tahiti") &&
 			/* Detect all 2.6 SDKs not with Tahiti and use diablo kernel */
 			(strstr(vbuff, "844.4") ||  // Linux 64 bit ATI 2.6 SDK
 			 strstr(vbuff, "851.4") ||  // Windows 64 bit ""
@@ -458,6 +462,12 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			/* Scrypt only supports vector 1 */
 			cgpu->vwidth = 1;
 			break;
+		case KL_NEOSCRYPT:
+			strcpy(filename, NEOSCRYPT_KERNNAME".cl");
+			strcpy(binaryfilename, NEOSCRYPT_KERNNAME);
+			/* Neoscrypt only supports vector 1 */
+			cgpu->vwidth = 1;
+			break;
 		case KL_KECCAK:
 			strcpy(filename, KECCAK_KERNNAME".cl");
 			strcpy(binaryfilename, KECCAK_KERNNAME);
@@ -479,7 +489,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	}
 
 	if (((clState->chosen_kernel == KL_POCLBM || clState->chosen_kernel == KL_DIABLO || clState->chosen_kernel == KL_DIAKGCN) &&
-		clState->vwidth == 1 && clState->hasOpenCL11plus) || opt_scrypt || opt_keccak)
+		clState->vwidth == 1 && clState->hasOpenCL11plus) || opt_scrypt|| opt_neoscrypt || opt_keccak)
 			clState->goffset = true;
 
 	if (cgpu->work_size && cgpu->work_size <= clState->max_work_size)
@@ -494,6 +504,30 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 
 #ifdef USE_SCRYPT
 	if (opt_scrypt) {
+		if (!cgpu->opt_lg) {
+			applog(LOG_DEBUG, "GPU %d: selecting lookup gap of 2", gpu);
+			cgpu->lookup_gap = 2;
+		} else
+			cgpu->lookup_gap = cgpu->opt_lg;
+
+		if (!cgpu->opt_tc) {
+			unsigned int sixtyfours;
+
+			sixtyfours =  cgpu->max_alloc / 131072 / 64 - 1;
+			cgpu->thread_concurrency = sixtyfours * 64;
+			if (cgpu->shaders && cgpu->thread_concurrency > cgpu->shaders) {
+				cgpu->thread_concurrency -= cgpu->thread_concurrency % cgpu->shaders;
+				if (cgpu->thread_concurrency > cgpu->shaders * 5)
+					cgpu->thread_concurrency = cgpu->shaders * 5;
+			}
+			applog(LOG_DEBUG, "GPU %d: selecting thread concurrency of %d", gpu, (int)(cgpu->thread_concurrency));
+		} else
+			cgpu->thread_concurrency = cgpu->opt_tc;
+	}
+#endif
+
+#ifdef USE_NEOSCRYPT
+	if (opt_neoscrypt) {
 		if (!cgpu->opt_lg) {
 			applog(LOG_DEBUG, "GPU %d: selecting lookup gap of 2", gpu);
 			cgpu->lookup_gap = 2;
@@ -548,7 +582,13 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		sprintf(numbuf, "lg%utc%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency);
 		strcat(binaryfilename, numbuf);
 #endif
-	} else {
+	} else if (opt_neoscrypt) {
+#ifdef USE_NEOSCRYPT
+		sprintf(numbuf, "lg%utc%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency);
+		strcat(binaryfilename, numbuf);
+#endif
+	}	
+	  else {
 		sprintf(numbuf, "v%d", clState->vwidth);
 		strcat(binaryfilename, numbuf);
 	}
@@ -621,6 +661,14 @@ build:
 			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize);
 	else
 #endif
+
+#ifdef USE_NEOSCRYPT
+	if (opt_neoscrypt)
+		sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d",
+			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize);
+	else
+#endif
+
 	{
 		sprintf(CompilerOptions, "-D WORKSIZE=%d -D VECTORS%d -D WORKVEC=%d",
 			(int)clState->wsize, clState->vwidth, (int)clState->wsize * clState->vwidth);
@@ -845,6 +893,41 @@ built:
 		clState->outputBuffer = clCreateBuffer(clState->context, CL_MEM_WRITE_ONLY, SCRYPT_BUFFERSIZE, NULL, &status);
 	} else
 #endif
+
+#ifdef USE_NEOSCRYPT
+	if (opt_neoscrypt) {
+		size_t ipt = (1024 / cgpu->lookup_gap + (1024 % cgpu->lookup_gap > 0));
+		size_t bufsize = 128 * ipt * cgpu->thread_concurrency;
+
+		/* Use the max alloc value which has been rounded to a power of
+		 * 2 greater >= required amount earlier */
+		if (bufsize > cgpu->max_alloc) {
+			applog(LOG_WARNING, "Maximum buffer memory device %d supports says %lu",
+						gpu, (long unsigned int)(cgpu->max_alloc));
+			applog(LOG_WARNING, "Your neoscrypt settings come to %d", (int)bufsize);
+		}
+		applog(LOG_DEBUG, "Creating neoscrypt buffer sized %d", (int)bufsize);
+		clState->padbufsize = bufsize;
+
+		/* This buffer is weird and might work to some degree even if
+		 * the create buffer call has apparently failed, so check if we
+		 * get anything back before we call it a failure. */
+		clState->padbuffer8 = NULL;
+		clState->padbuffer8 = clCreateBuffer(clState->context, CL_MEM_READ_WRITE, bufsize, NULL, &status);
+		if (status != CL_SUCCESS && !clState->padbuffer8) {
+			applog(LOG_ERR, "Error %d: clCreateBuffer (padbuffer8), decrease TC or increase LG", status);
+			return NULL;
+		}
+
+		clState->CLbuffer0 = clCreateBuffer(clState->context, CL_MEM_READ_ONLY, 128, NULL, &status);
+		if (status != CL_SUCCESS) {
+			applog(LOG_ERR, "Error %d: clCreateBuffer (CLbuffer0)", status);
+			return NULL;
+		}
+		clState->outputBuffer = clCreateBuffer(clState->context, CL_MEM_WRITE_ONLY, SCRYPT_BUFFERSIZE, NULL, &status);
+	} else
+#endif
+
 #ifdef USE_KECCAK
 	if (opt_keccak) {
 		clState->keccak_CLbuffer = clCreateBuffer(clState->context, CL_MEM_READ_ONLY, KECCAK_BUFFER_SIZE, NULL, &status);
